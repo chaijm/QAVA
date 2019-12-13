@@ -418,18 +418,17 @@ class Controller():
             if len(video.clients) != 0:
                 video.clients_mutex.acquire()
                 for client in video.clients.values():
-                    if client.quality != video.past_chunk_ph_quality:
-                        if client.past_chunkno == 0:
-                            if client.device == 1:
-                                client.past_quality = client.quality = video.past_chunk_ph_quality
-                            else:
-                                client.past_quality = client.quality = video.past_chunk_tv_quality
+                    if client.past_chunkno == 0:
+                        if client.device == 1:
+                            client.past_quality = client.quality = video.past_chunk_ph_quality
                         else:
-                            client.past_quality = client.quality
-                            if client.device == 1:
-                                client.quality = video.past_chunk_ph_quality
-                            else:
-                                client.quality = video.past_chunk_tv_quality
+                            client.past_quality = client.quality = video.past_chunk_tv_quality
+                    else:
+                        client.past_quality = client.quality
+                        if client.device == 1:
+                            client.quality = video.past_chunk_ph_quality
+                        else:
+                            client.quality = video.past_chunk_tv_quality
                 video.clients_mutex.release()
 
             flag = 0
