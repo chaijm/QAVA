@@ -209,5 +209,3 @@ class A3C():
             del self.entropy_record[:]
             print('Agent {} upload the params.'.format(self.agent_id))
 
-
-

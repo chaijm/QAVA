@@ -128,13 +128,3 @@ def handle_post(request):
             res = 'close'
             return HttpResponse(res)
 
-
-
-
-
-
-
-
-
-
-

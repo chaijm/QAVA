@@ -215,9 +215,9 @@ class Controller():
                     c.past_chunkno = c.chunkno = self.totalvideos[video_name].past_chunkno
 
                     if c.device == 1:
-                        c.past_quality = c.quality = self.totalvideos[video_name].pp_chunk_ph_quality
+                        c.past_quality = c.quality = self.totalvideos[video_name].past_chunk_ph_quality
                     else:
-                        c.past_quality = c.quality = self.totalvideos[video_name].pp_chunk_tv_quality
+                        c.past_quality = c.quality = self.totalvideos[video_name].past_chunk_tv_quality
                     conn.close()
 
                     print 'send past chunk %s %s to %s' % \
@@ -230,10 +230,7 @@ class Controller():
                     c.chunkno = self.totalvideos[video_name].chunkno
                     self.totalvideos[video_name].clients_mutex.acquire()
                     self.totalvideos[video_name].clients[ip] = c
-                    if c.device == 1:
-                        c.past_quality = c.quality = self.totalvideos[video_name].past_chunk_ph_quality
-                    else:
-                        c.past_quality = c.quality = self.totalvideos[video_name].past_chunk_tv_quality
+
                     self.totalvideos[video_name].clients_mutex.release()
 
                     print '%s wait newest chunk %s' % (str(c.ip), str(c.chunkno))
@@ -262,14 +259,6 @@ class Controller():
                     print '%s wait this chunk download' % ip
                     self.totalclients[ip].chunkno = video.chunkno
                     video.clients_mutex.acquire()
-                    client = self.totalclients[ip]
-                    if client.quality != video.past_chunk_ph_quality and \
-                            client.quality != video.past_chunk_tv_quality:
-                        client.past_quality = client.quality
-                        if client.device == 1:
-                            client.quality = video.past_chunk_ph_quality
-                        else:
-                            client.quality = video.past_chunk_tv_quality
                     video.clients[ip] = self.totalclients[ip]
                     video.clients_mutex.release()
                 elif self.totalclients[ip].chunkno > self.totalclients[ip].past_chunkno \
@@ -281,28 +270,24 @@ class Controller():
                         (CLIENT_CONN[ip]).close()
                         del CLIENT_CONN[ip]
                     conn_mutex.release()
-                    if self.totalclients[ip].quality != video.pp_chunk_ph_quality and \
-                            self.totalclients[ip].quality != video.pp_chunk_tv_quality:
+                    self.totalclients[ip].past_chunkno = self.totalclients[ip].chunkno
+                    if video.chunk_download == True:
                         self.totalclients[ip].past_quality = self.totalclients[ip].quality
                         if self.totalclients[ip].device == 1:
                             self.totalclients[ip].quality = video.pp_chunk_ph_quality
                         else:
                             self.totalclients[ip].quality = video.pp_chunk_tv_quality
+                    else:
+                        self.totalclients[ip].past_quality = self.totalclients[ip].quality
+                        if self.totalclients[ip].device == 1:
+                            self.totalclients[ip].quality = video.past_chunk_ph_quality
+                        else:
+                            self.totalclients[ip].quality = video.past_chunk_tv_quality
                     self.totalclients[ip].chunkno = video.past_chunkno
                 else:
-                    print 'request error. %s chunkno %d, pastchunkno %d, videochunkno %d' % \
-                    (ip, self.totalclients[ip].chunkno, self.totalclients[ip].past_chunkno, video.chunkno)
                     video.clients_mutex.acquire()
                     client = self.totalclients[ip]
-                    if client.quality != video.past_chunk_ph_quality and \
-                            client.quality != video.past_chunk_tv_quality:
-                        client.past_chunkno = video.past_chunkno
-                        client.chunkno = video.chunkno
-                        client.past_quality = client.quality
-                        if client.device == 1:
-                            client.quality = video.past_chunk_ph_quality
-                        else:
-                            client.quality = video.past_chunk_tv_quality
+                    client.past_chunkno = client.chunkno = video.chunkno
                     video.clients[ip] = self.totalclients[ip]
                     video.clients_mutex.release()
             else:
@@ -341,8 +326,6 @@ class Controller():
             if time.time() - video.start_time >= VIDEO_DURATION[video.video_name]:
                 print '%s timeout' % video_name
                 break
-
-            video.chunk_download = False
 
             if video.past_chunkno != 0:
                 # update client qoe
@@ -415,21 +398,6 @@ class Controller():
 
             bitrate = BITRATE[a3c.action(state)]
             video._get_chunk_quality(bitrate)
-            if len(video.clients) != 0:
-                video.clients_mutex.acquire()
-                for client in video.clients.values():
-                    if client.past_chunkno == 0:
-                        if client.device == 1:
-                            client.past_quality = client.quality = video.past_chunk_ph_quality
-                        else:
-                            client.past_quality = client.quality = video.past_chunk_tv_quality
-                    else:
-                        client.past_quality = client.quality
-                        if client.device == 1:
-                            client.quality = video.past_chunk_ph_quality
-                        else:
-                            client.quality = video.past_chunk_tv_quality
-                video.clients_mutex.release()
 
             flag = 0
 
@@ -439,6 +407,8 @@ class Controller():
             rawdata_f.write(str(bitrate) + ' ')
             rawdata_f.flush()
             rawdata_f.close()
+			
+			video.chunk_download = False
 
             # download this bitrate's chunk
             self._request_new_chunk(video, bitrate, video.video_name, video.chunkno)
@@ -460,6 +430,18 @@ class Controller():
                             video.past_tv_clients = video.past_tv_clients + 1
 
                         # compute client metrics
+						if client.past_chunkno == 0:
+                            if client.device == 1:
+                                client.past_quality = client.quality = video.past_chunk_ph_quality
+                            else:
+                                client.past_quality = client.quality = video.past_chunk_tv_quality
+                        else:
+                            client.past_quality = client.quality
+                            if client.device == 1:
+                                client.quality = video.past_chunk_ph_quality
+                            else:
+                                client.quality = video.past_chunk_tv_quality
+								
                         if client.past_chunkno == 0:
                             client.buffer = 2
                             client.rebuffer = 0
@@ -500,6 +482,18 @@ class Controller():
                             video.past_tv_clients = video.past_tv_clients + 1
 
                         # compute client qoe
+						if client.past_chunkno == 0:
+                            if client.device == 1:
+                                client.past_quality = client.quality = video.past_chunk_ph_quality
+                            else:
+                                client.past_quality = client.quality = video.past_chunk_tv_quality
+                        else:
+                            client.past_quality = client.quality
+                            if client.device == 1:
+                                client.quality = video.past_chunk_ph_quality
+                            else:
+                                client.quality = video.past_chunk_tv_quality
+								
                         client.chunk_skip = 0
                         if client.past_chunkno == 0:
                             client.buffer = 2

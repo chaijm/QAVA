@@ -377,3 +377,4 @@ def build_summaries():
     summary_ops = tf.summary.merge_all()
 
     return summary_ops, summary_vars
+
