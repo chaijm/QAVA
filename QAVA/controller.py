@@ -312,8 +312,8 @@ class Controller():
             except:
                 print 'mpd download error'
 
-            os.system('cp /home/cjm/www/edgeController/coding_video/%s/%s.mpd %s/%s.mpd' \
-                      % (video.video_name, video.video_name, VIDEO_ADDR, video.video_name))
+            os.system('cp %s/coding_video/%s/%s.mpd %s/%s.mpd' \
+                      % (VIDEO_ADDR, video.video_name, video.video_name, VIDEO_ADDR, video.video_name))
 
         while time.time() - video.start_time < VIDEO_DURATION[video.video_name]:
             wait_start_time = time.time()
@@ -887,8 +887,8 @@ class Controller():
             video.past_chunk_download_speed = len(res) * 8.0 / video.past_chunk_download_time / 1000000
         except:
             print 'chunk download error'
-        os.system('cp /home/cjm/www/edgeController/coding_video/%s/%s_%s/segment_%s.m4s %s/%s_%s_%s.m4s' \
-                  % (video_name, video_name, bitrate, chunkno, VIDEO_ADDR, video_name, chunkno, bitrate))
+        os.system('cp %s/coding_video/%s/%s_%s/segment_%s.m4s %s/%s_%s_%s.m4s' \
+                  % (VIDEO_ADDR, video_name, video_name, bitrate, chunkno, VIDEO_ADDR, video_name, chunkno, bitrate))
         print "%s %s %s already downloaded" % (video_name, chunkno, bitrate)
 
     def _compute_fairness(self):
@@ -939,8 +939,8 @@ class Controller():
             time.sleep(1)
 
 if __name__ == "__main__":
-    os.system('rm -f /home/cjm/www/edgeController/*.m4s')
-    os.system('rm -f /home/cjm/www/edgeController/*.mpd')
+    os.system('rm -f %s/*.m4s' % VIDEO_ADDR)
+    os.system('rm -f %s/*.mpd' % VIDEO_ADDR)
 
     edge_controller = Controller()
     print 'open controller'
