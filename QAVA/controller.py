@@ -407,8 +407,8 @@ class Controller():
             rawdata_f.write(str(bitrate) + ' ')
             rawdata_f.flush()
             rawdata_f.close()
-			
-			video.chunk_download = False
+
+            video.chunk_download = False
 
             # download this bitrate's chunk
             self._request_new_chunk(video, bitrate, video.video_name, video.chunkno)
