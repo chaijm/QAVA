@@ -309,11 +309,14 @@ class Controller():
                 req = urllib2.Request(url)
                 res_data = urllib2.urlopen(req, timeout=60)
                 res = res_data.read()
+
+                # since chunks exist directly in memory, they are copied after downloading for simplicity
+                os.system('cp %s/coding_video/%s/%s.mpd %s/%s.mpd' \
+                          % (VIDEO_ADDR, video.video_name, video.video_name, VIDEO_ADDR, video.video_name))
             except:
                 print 'mpd download error'
 
-            os.system('cp %s/coding_video/%s/%s.mpd %s/%s.mpd' \
-                      % (VIDEO_ADDR, video.video_name, video.video_name, VIDEO_ADDR, video.video_name))
+
 
         while time.time() - video.start_time < VIDEO_DURATION[video.video_name]:
             wait_start_time = time.time()
@@ -430,7 +433,7 @@ class Controller():
                             video.past_tv_clients = video.past_tv_clients + 1
 
                         # compute client metrics
-						if client.past_chunkno == 0:
+                        if client.past_chunkno == 0:
                             if client.device == 1:
                                 client.past_quality = client.quality = video.past_chunk_ph_quality
                             else:
@@ -482,7 +485,7 @@ class Controller():
                             video.past_tv_clients = video.past_tv_clients + 1
 
                         # compute client qoe
-						if client.past_chunkno == 0:
+                        if client.past_chunkno == 0:
                             if client.device == 1:
                                 client.past_quality = client.quality = video.past_chunk_ph_quality
                             else:
@@ -883,13 +886,15 @@ class Controller():
             res_data = urllib2.urlopen(req, timeout=60)
             res = res_data.read()
 
+            os.system('cp %s/coding_video/%s/%s_%s/segment_%s.m4s %s/%s_%s_%s.m4s' \
+                      % (
+                      VIDEO_ADDR, video_name, video_name, bitrate, chunkno, VIDEO_ADDR, video_name, chunkno, bitrate))
+            print "%s %s %s already downloaded" % (video_name, chunkno, bitrate)
+
             video.past_chunk_download_time = time.time() - stime
             video.past_chunk_download_speed = len(res) * 8.0 / video.past_chunk_download_time / 1000000
         except:
             print 'chunk download error'
-        os.system('cp %s/coding_video/%s/%s_%s/segment_%s.m4s %s/%s_%s_%s.m4s' \
-                  % (VIDEO_ADDR, video_name, video_name, bitrate, chunkno, VIDEO_ADDR, video_name, chunkno, bitrate))
-        print "%s %s %s already downloaded" % (video_name, chunkno, bitrate)
 
     def _compute_fairness(self):
         while True:
